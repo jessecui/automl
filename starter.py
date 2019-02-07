@@ -7,4 +7,4 @@ X_train, X_test, y_train, y_test =    sklearn.model_selection.train_test_split(X
 automl = autosklearn.classification.AutoSklearnClassifier()
 automl.fit(X_train, y_train)
 y_hat = automl.predict(X_test)
-rint("Accuracy score", sklearn.metrics.accuracy_score(y_test, y_hat))
+print("Accuracy score", sklearn.metrics.accuracy_score(y_test, y_hat))
