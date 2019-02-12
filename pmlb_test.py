@@ -13,7 +13,7 @@ print(adult_y)
 from pmlb import dataset_names
 print(dataset_names)
 
-# Prints classifcation and regression sets
+# Prints classification and regression sets
 from pmlb import classification_dataset_names, regression_dataset_names
 
 print(classification_dataset_names)
@@ -54,7 +54,7 @@ for classification_dataset in classification_dataset_names:
 
 
 # With AutoSK-Learn
-import autosklearn.classifcation
+import autosklearn.classification
 import sklearn.model_selection
 import sklearn.datasets
 import sklearn.metrics
