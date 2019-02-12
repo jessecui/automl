@@ -77,4 +77,5 @@ for classification_dataset in classification_dataset_names:
     
 sb.boxplot(data=[logit_test_scores, gnb_test_scores, base_autoskl_scores], notch=True)
 plt.xticks([0, 1], ['LogisticRegression', 'GaussianNB', 'AutoML'])
-plt.ylabel('Test Accuracy')    
+plt.ylabel('Test Accuracy')
+plt.savefig('comparison1.png')
