@@ -35,7 +35,7 @@ gnb_test_scores = []
 
 count = 1
 for classification_dataset in classification_dataset_names:
-    if count < 25:
+    if count < 20:
         X, y = fetch_data(classification_dataset, return_X_y=True)
         train_X, test_X, train_y, test_y = train_test_split(X, y)
     
@@ -62,12 +62,13 @@ import sklearn.metrics
 base_autoskl_scores = []
 count = 1
 for classification_dataset in classification_dataset_names:
-    if count < 25:
+    if count < 20:
         print("Auto-SKLearn, on set ", count)
         X, y = fetch_data(classification_dataset, return_X_y=True)
         X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
     
-        automl = autosklearn.classification.AutoSklearnClassifier()
+        # Autosklearn classifier with 20 min limit
+        automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 1200)
         automl.fit(X_train, y_train)
         
         base_autoskl_scores.append(automl.score(test_X, test_y))
