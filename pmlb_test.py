@@ -71,7 +71,7 @@ for classification_dataset in classification_dataset_names:
         automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 1200)
         automl.fit(X_train, y_train)
         
-        base_autoskl_scores.append(automl.score(test_X, test_y))
+        base_autoskl_scores.append(automl.score(X_test, y_train))
         count += 1
     else:
         break
