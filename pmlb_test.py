@@ -71,7 +71,7 @@ for classification_dataset in classification_dataset_names:
         X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
     
         # Autosklearn classifier with 20 min limit
-        automl = autosklearn.classification.AutoSklearnClassifier()
+        automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 1200)
         print("Current X_train has size ", str(X_train.shape))
         print("Auto-SKLearn, fitting on set ", count)
         automl.fit(X_train, y_train)
