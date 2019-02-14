@@ -41,8 +41,8 @@ from pmlb import fetch_data, classification_dataset_names
 
 logit_test_scores = []
 gnb_test_scores = []
-datasets_tested = []
 base_autoskl_scores = []
+datasets_tested = []
 
 count = 1
 for classification_dataset in classification_dataset_names:
@@ -82,8 +82,9 @@ for classification_dataset in classification_dataset_names:
 print(str(base_autoskl_scores))
 print(str(logit_test_scores))
 print(str(gnb_test_scores))
+print(str(datasets_tested))
     
 sb.boxplot(data=[logit_test_scores, gnb_test_scores, base_autoskl_scores], notch=True)
-plt.xticks([0, 1], ['LogisticRegression', 'GaussianNB', 'AutoML'])
+plt.xticks([0, 1, 2], ['LogisticRegression', 'GaussianNB', 'AutoML'])
 plt.ylabel('Test Accuracy')
 plt.savefig('comparison1b.png')
