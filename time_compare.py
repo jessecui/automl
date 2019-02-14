@@ -30,7 +30,7 @@ for timecap in times:
     
     count = 1
     for classification_dataset in classification_dataset_names:
-        if count <= 10:
+        if count <= 5:
             datasets_tested.append(str(classification_dataset))            
             
             print("Auto-SKLearn, on set ", count)
