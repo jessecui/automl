@@ -71,12 +71,13 @@ for classification_dataset in classification_dataset_names:
         X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
     
         # Autosklearn classifier with 20 min limit
-        print("Auto-SKLearn, training on set ", count)
         automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 600)
+        print("Current X_train has size ", str(X_train.shape))
         print("Auto-SKLearn, fitting on set ", count)
         automl.fit(X_train, y_train)
-        
+        print("Auto-SKLearn, testing on set ", count)        
         base_autoskl_scores.append(automl.score(X_test, y_test))
+        print("Auto-SKLearn, finished testing on set ", count)                
         count += 1
     else:
         break
