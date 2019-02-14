@@ -1,5 +1,8 @@
 from pmlb import fetch_data
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # Returns a pandas DataFrame
 adult_data = fetch_data('adult')
 print(adult_data.describe())
@@ -68,7 +71,9 @@ for classification_dataset in classification_dataset_names:
         X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
     
         # Autosklearn classifier with 20 min limit
-        automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 1200)
+        print("Auto-SKLearn, training on set ", count)
+        automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 600)
+        print("Auto-SKLearn, fitting on set ", count)
         automl.fit(X_train, y_train)
         
         base_autoskl_scores.append(automl.score(X_test, y_test))
