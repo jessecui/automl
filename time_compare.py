@@ -21,7 +21,7 @@ import sklearn.metrics
 from pmlb import fetch_data, classification_dataset_names
 
 # To test results via different times
-times = [300, 600, 1200, 1800]
+times = [300, 600, 1500, 1800]
 time_costs = {}
 for timecap in times:
     print('CURRENT TIME IS ', timecap)
@@ -38,7 +38,7 @@ for timecap in times:
             X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
         
             # Autosklearn classifier with 20 min limit
-            automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = 300)
+            automl = autosklearn.classification.AutoSklearnClassifier(time_left_for_this_task = timecap)
             print("Current X_train has size ", str(X_train.shape))
             print("Auto-SKLearn, fitting on set ", count)
             automl.fit(X_train, y_train)
