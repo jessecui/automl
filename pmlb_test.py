@@ -3,25 +3,11 @@ from pmlb import fetch_data
 import warnings
 warnings.filterwarnings("ignore")
 
-# Returns a pandas DataFrame
-adult_data = fetch_data('adult')
-print(adult_data.describe())
-
-# Returns NumPy arrays
-adult_X, adult_y = fetch_data('adult', return_X_y=True, local_cache_dir='./')
-print(adult_X)
-print(adult_y)
-
 # Print dataset names
 from pmlb import dataset_names
-print(dataset_names)
 
 # Prints classification and regression sets
 from pmlb import classification_dataset_names, regression_dataset_names
-
-print(classification_dataset_names)
-print('')
-print(regression_dataset_names)
 
 # Example comparison (starter code from Github documentation)
 from sklearn.linear_model import LogisticRegression
@@ -82,7 +68,7 @@ for classification_dataset in classification_dataset_names:
 print("Autosklearn scores: ", str(base_autoskl_scores))
 print("Logit scores: ", str(logit_test_scores))
 print("GNB scores: ", str(gnb_test_scores))
-print("Datasets tested". str(datasets_tested))
+print("Datasets tested", str(datasets_tested))
     
 sb.boxplot(data=[logit_test_scores, gnb_test_scores, base_autoskl_scores], notch=True)
 plt.xticks([0, 1, 2], ['LogisticRegression', 'GaussianNB', 'AutoML'])
