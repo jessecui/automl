@@ -21,7 +21,7 @@ import sklearn.metrics
 from pmlb import fetch_data, classification_dataset_names
 
 # To test results via different times
-times = [300, 600, 1500, 1800, 3600]
+times = [600, 900, 1200, 1800, 3600]
 time_costs = {}
 for timecap in times:
     print('CURRENT TIME IS ', timecap)
