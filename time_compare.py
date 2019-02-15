@@ -21,16 +21,18 @@ import sklearn.metrics
 from pmlb import fetch_data, classification_dataset_names
 
 # To test results via different times
-times = [300, 600, 1500, 1800]
+times = [300, 600, 1500, 1800, 3600]
 time_costs = {}
 for timecap in times:
     print('CURRENT TIME IS ', timecap)
     base_autoskl_scores = []
     datasets_tested = []
     
+    
+    
     count = 1
     for classification_dataset in classification_dataset_names:
-        if count <= 5:
+        if count <= 6:
             datasets_tested.append(str(classification_dataset))            
             
             print("Auto-SKLearn, on set ", count)
@@ -60,7 +62,7 @@ for timecap in times:
     time_labels = list(time_costs.keys())
     ticks = list(range(0,len(time_costs)))
     sb.boxplot(data=time_data, notch=True)
-    plt.xticks(ticks, time_data)
+    plt.xticks(ticks, time_labels)
     plt.ylabel('Test Accuracy')
-    plt.savefig('comparison_times.png')
+    plt.savefig('comparison_times2.png')
     plt.close()
