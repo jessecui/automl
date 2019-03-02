@@ -131,8 +131,7 @@ for time_cap in times:
         except:
             print("EXCEPTION: CURRENT DATASET FAILED WITH AUTOSKLEARN. CONTINUING TO NEXT DATASET.")
             continue;
-            
-              
+                          
         # Store the result in a dictionary
         curr_dataset_results['name'] = dataset
         curr_dataset_results['number'] = dataset_props[dataset][3]
