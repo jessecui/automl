@@ -1,0 +1,5 @@
+	name	num_classes	num_features	num_instances	number	score	time_cap
+0	GAMETES_Epistasis_2-Way_1000atts_0.4H_EDM-1_EDM-1_1	2	1000	1600	1	0.48	14400
+1	GAMETES_Epistasis_2-Way_20atts_0.1H_EDM-1_1	2	20	1600	2	0.6275	14400
+2	GAMETES_Epistasis_2-Way_20atts_0.4H_EDM-1_1	2	20	1600	3	0.7875	14400
+3	GAMETES_Epistasis_3-Way_20atts_0.2H_EDM-1_1	2	20	1600	4	0.6425	14400

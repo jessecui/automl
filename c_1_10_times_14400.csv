@@ -1,0 +1,11 @@
+	name	num_classes	num_features	num_instances	number	score	time_cap
+0	GAMETES_Epistasis_2-Way_1000atts_0.4H_EDM-1_EDM-1_1	2	1000	1600	1	0.5225	14400
+1	GAMETES_Epistasis_2-Way_20atts_0.1H_EDM-1_1	2	20	1600	2	0.6325	14400
+2	GAMETES_Epistasis_2-Way_20atts_0.4H_EDM-1_1	2	20	1600	3	0.755	14400
+3	GAMETES_Epistasis_3-Way_20atts_0.2H_EDM-1_1	2	20	1600	4	0.645	14400
+4	GAMETES_Heterogeneity_20atts_1600_Het_0.4_0.2_50_EDM-2_001	2	20	1600	5	0.7	14400
+5	GAMETES_Heterogeneity_20atts_1600_Het_0.4_0.2_75_EDM-2_001	2	20	1600	6	0.7175	14400
+6	Hill_Valley_with_noise	2	100	1212	7	1.0	14400
+7	Hill_Valley_without_noise	2	100	1212	8	1.0	14400
+8	adult	2	14	48842	9	0.8709360412742609	14400
+9	agaricus-lepiota	2	22	8145	10	1.0	14400
