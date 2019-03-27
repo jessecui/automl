@@ -1,0 +1,5 @@
+	accuracy	balanced_accuracy	f1	f1_macro	f1_micro	f1_weighted	log_loss	name	num_classes	num_features	num_instances	number	precision	precision_macro	precision_micro	precision_weighted	recall	recall_macro	recall_micro	recall_weighted	time_stamp
+0	1.0	1.0	1.0	1.0	1.0	1.0	-9.992007221626413e-16	agaricus-lepiota	2	22	8145	10	1.0	1.0	1.0	1.0	1.0	1.0	1.0	1.0	20
+1	1.0	1.0	1.0	1.0	1.0	1.0	-9.992007221626413e-16	agaricus-lepiota	2	22	8145	10	1.0	1.0	1.0	1.0	1.0	1.0	1.0	1.0	40
+2	1.0	1.0	1.0	1.0	1.0	1.0	-9.992007221626413e-16	agaricus-lepiota	2	22	8145	10	1.0	1.0	1.0	1.0	1.0	1.0	1.0	1.0	60
+3	1.0	1.0	1.0	1.0	1.0	1.0	-9.992007221626413e-16	agaricus-lepiota	2	22	8145	10	1.0	1.0	1.0	1.0	1.0	1.0	1.0	1.0	80
