@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 # Surpress warnings
@@ -12,13 +11,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sb
 import pickle
+from joblib import dump, load
 import sys
 import math
+import dill
 
 # Import libraries for multithreading
 import time
 import shutil
-from multiprocessing import Process, current_process, Manager, Value
+from multiprocessing import Process, current_process, Manager, Value, active_children
 
 # Import SK-learn and AutoSK-Learn
 import autosklearn.classification
@@ -27,7 +28,7 @@ import sklearn.model_selection
 import sklearn.datasets
 import sklearn.metrics
 
-# Use argparse to input user arguments
+# Read user arguments with argparse
 import argparse
 
 parser = argparse.ArgumentParser(description='Run Auto-SkLearn on PMLB datasets')
@@ -74,14 +75,14 @@ if regre_sets and maxset > 120:
     maxset = 120
     print('Maxset provided is greater than 120, changed to 120.')  
 
-print(minset)
-print(maxset)
-print(max_time)
-print(regre_sets)
-print(class_sets)
-print(no_xgboost)
-print(memory_cap)
-print(interval)
+print('Min set: ', minset)
+print('Max set: ', maxset)
+print('Max time: ', max_time)
+print('Regression: ', regre_sets)
+print('Classification: ', class_sets)
+print('No XGBoost: ', no_xgboost)
+print('Memory Cap: ', memory_cap)
+print('Interval: ', interval)
 
 # Create a dictionary of the number of features, instances, and classes per classification dataset
 # Potentially look into including number of binary, integer, and float features in the future
@@ -180,34 +181,55 @@ def run_main_model(dataset, X_train, y_train, max_time, memory_cap, tmp_folder, 
         model_failed.value = True
 
 # A function that will be threaded periodically to take snapshots of the main model
-def snapshot_model_and_score(X_test, y_test, max_time, memory_cap, tmp_folder, output_folder, 
-                             seed, curr_snap_time, dataset_props, df_rows_list, class_sets, regre_sets, interval):
-    snapshot = autosklearn.classification.AutoSklearnClassifier(
-            time_left_for_this_task=1,
-            per_run_time_limit = 1,
-            shared_mode=True, # tmp folder will be shared between seeds
-            tmp_folder=tmp_folder,
-            output_folder=output_folder,
-            delete_tmp_folder_after_terminate=False,
-            delete_output_folder_after_terminate=False,
-            seed=seed,)
+def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_cap, tmp_folder, output_folder, 
+                             seed, curr_snap_time, dataset_props, df_rows_list, class_sets, regre_sets, interval, final):
+    print('a')
     
+    task_time_limit = 15 if not final else 60
+    run_time_limit = 1 if not final else 60
+    
+    if class_sets:
+        snapshot = autosklearn.classification.AutoSklearnClassifier(
+                time_left_for_this_task = task_time_limit,
+                per_run_time_limit = run_time_limit,
+                shared_mode=True, # tmp folder will be shared between seeds
+                tmp_folder=tmp_folder,
+                output_folder=output_folder,
+                delete_tmp_folder_after_terminate=False,
+                delete_output_folder_after_terminate=False,
+                seed=seed,)
+    if regre_sets:
+        snapshot = autosklearn.regression.AutoSklearnRegressor(
+                time_left_for_this_task = task_time_limit,
+                per_run_time_limit = run_time_limit,
+                shared_mode=True, # tmp folder will be shared between seeds
+                tmp_folder=tmp_folder,
+                output_folder=output_folder,
+                delete_tmp_folder_after_terminate=False,
+                delete_output_folder_after_terminate=False,
+                seed=seed,)            
+
     # Run the snapshot model to retrieve the model information from the temp folder
-    # This solution is not ideal even though it works. It currently does print an error because the time cap is 0.
+    # This solution is not ideal even though it works. It may print an error.
+    print('b')
     try:
-        print('i')
         snapshot.fit(X_test, y_test)
-        print('j')
     except:
-        print('k')
-        pass
+        print("EXCEPTION ON FITTING OCCURED")
     
-    print('l')
+    print('c')
     y_hat = snapshot.predict(X_test)
-    print('m')
-    accuracy_score = autosklearn.metrics.accuracy(y_test, y_hat)
-    print(f"Current snapshot score at time {curr_snap_time}: {accuracy_score}")    
+    train_y_hat = snapshot.predict(X_train)
+    print('d')
+    if class_sets:
+        curr_model_score = autosklearn.metrics.accuracy(y_test, y_hat)
+        print(f"Current snapshot accuracy score at time {curr_snap_time}: {curr_model_score}")
         
+    if regre_sets:
+        curr_model_score = autosklearn.metrics.mean_squared_error(y_test, y_hat)
+        print(f"Current snapshot MSE score at time {curr_snap_time}: {curr_model_score}")    
+    
+    print('e')    
     # Store the result in a dictionary
     curr_dataset_results = {}
     curr_dataset_results['name'] = dataset
@@ -216,20 +238,47 @@ def snapshot_model_and_score(X_test, y_test, max_time, memory_cap, tmp_folder, o
     curr_dataset_results['num_features'] = dataset_props[dataset][1]
     curr_dataset_results['num_classes'] = dataset_props[dataset][2]
     curr_dataset_results['time_stamp'] = curr_snap_time
+    curr_dataset_results['models']  = snapshot.get_models_with_weights()
     
+    print('f')
     if class_sets:
-        curr_dataset_results['accuracy'] = accuracy_score
+        curr_dataset_results['accuracy'] = autosklearn.metrics.accuracy(y_test, y_hat)
         curr_dataset_results['balanced_accuracy'] = autosklearn.metrics.balanced_accuracy(y_test, y_hat)
-        curr_dataset_results['f1'] = autosklearn.metrics.f1(y_test, y_hat)
+        curr_dataset_results['f1_macro'] = autosklearn.metrics.f1_macro(y_test, y_hat)
+        curr_dataset_results['f1_micro'] = autosklearn.metrics.f1_micro(y_test, y_hat)
+        curr_dataset_results['f1_weighted'] = autosklearn.metrics.f1_weighted(y_test, y_hat)
+        curr_dataset_results['precision_macro'] = autosklearn.metrics.precision_macro(y_test, y_hat)
+        curr_dataset_results['precision_micro'] = autosklearn.metrics.precision_micro(y_test, y_hat)
+        curr_dataset_results['precision_weighted'] = autosklearn.metrics.precision_weighted(y_test, y_hat)
+        curr_dataset_results['recall_macro'] = autosklearn.metrics.recall_macro(y_test, y_hat)
+        curr_dataset_results['recall_micro'] = autosklearn.metrics.recall_micro(y_test, y_hat)
+        curr_dataset_results['recall_weighted'] = autosklearn.metrics.recall_weighted(y_test, y_hat)
+        print('g')
+        curr_dataset_results['train_accuracy'] = autosklearn.metrics.accuracy(y_train, train_y_hat)
+        curr_dataset_results['train_balanced_accuracy'] = autosklearn.metrics.balanced_accuracy(y_train, train_y_hat)
+        curr_dataset_results['train_f1_macro'] = autosklearn.metrics.f1_macro(y_train, train_y_hat)
+        curr_dataset_results['train_f1_micro'] = autosklearn.metrics.f1_micro(y_train, train_y_hat)
+        curr_dataset_results['train_f1_weighted'] = autosklearn.metrics.f1_weighted(y_train, train_y_hat)
+        curr_dataset_results['train_precision_macro'] = autosklearn.metrics.precision_macro(y_train, train_y_hat)
+        curr_dataset_results['train_precision_micro'] = autosklearn.metrics.precision_micro(y_train, train_y_hat)
+        curr_dataset_results['train_precision_weighted'] = autosklearn.metrics.precision_weighted(y_train, train_y_hat)
+        curr_dataset_results['train_recall_macro'] = autosklearn.metrics.recall_macro(y_train, train_y_hat)
+        curr_dataset_results['train_recall_micro'] = autosklearn.metrics.recall_micro(y_train, train_y_hat)
+        curr_dataset_results['train_recall_weighted'] = autosklearn.metrics.recall_weighted(y_train, train_y_hat)
         
     if regre_sets:
-        pass
-
-    # Save the pickled model
-    #curr_dataset_results['model'] = pickle.dumps(automl)
-    #print('size of model mb: ', str(sys.getsizeof(curr_dataset_results['model'])/1000000))
+        curr_dataset_results['r2'] = autosklearn.metrics.r2(y_test, y_hat)
+        curr_dataset_results['mean_squared_error'] = autosklearn.metrics.mean_squared_error(y_test, y_hat)
+        curr_dataset_results['mean_absolute_error'] = autosklearn.metrics.mean_absolute_error(y_test, y_hat)
+        curr_dataset_results['median_absolute_error'] = autosklearn.metrics.median_absolute_error(y_test, y_hat)
+        
+        curr_dataset_results['train_r2'] = autosklearn.metrics.r2(y_train, train_y_hat)
+        curr_dataset_results['train_mean_squared_error'] = autosklearn.metrics.mean_squared_error(y_train, train_y_hat)
+        curr_dataset_results['train_mean_absolute_error'] = autosklearn.metrics.mean_absolute_error(y_train, train_y_hat)
+        curr_dataset_results['train_median_absolute_error'] = autosklearn.metrics.median_absolute_error(y_train, train_y_hat)
 
     # Append current dictionary to a list of dictionary
+    print('h')
     df_rows_list.append(curr_dataset_results)                
 
     # Create a Pandas Dataframe with the results
@@ -239,25 +288,33 @@ def snapshot_model_and_score(X_test, y_test, max_time, memory_cap, tmp_folder, o
     # Save results into a CSV after every round
     set_type_string = 'c' if class_sets else 'r'
 
-    file_name = 'PMLB_benchmark_results/' + set_type_string + str(dataset_props[dataset][3]) + '_' +                 'maxtime' + '_' + str(max_time) + '_'+ 'interval' + '_' + str(interval) + '.csv'
-    print('saved to ', file_name)
+    csv_file_name = 'PMLB_benchmark_results/' + set_type_string + str(dataset_props[dataset][3]) + '_' +                 'maxtime' + str(max_time) + '_'+ 'interval' + str(interval) + '.csv'
+    print('saved to ', csv_file_name)
 
-    autosklearn_df.to_csv(file_name, sep='\t')    
-
-dataset_names
+    autosklearn_df.to_csv(csv_file_name, sep='\t')
+    
+    # Save the pickled model
+    # May occasionally raise an error
+    model_file_name = 'Saved_models/' + set_type_string + str(dataset_props[dataset][3]) + '_' + 'maxtime' + str(max_time) + '_' + 'interval' + str(interval) + '.sav'    
+    try:
+        dump(snapshot, model_file_name)    
+    except Exception as e:
+        print('Unsuccessful snapshot model save');
+        print(e)
+        
+    print('Successfully saved snapshot model to ', model_file_name)    
 
 manager = Manager()
 
 # Add performance results of the datasets that we query on to a final dataframe to output
 for dataset in dataset_names:    
-    print('g')
     shared_list = manager.list()
     # Split the data to training and test sets
     X, y = fetch_data(dataset, return_X_y=True)
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, random_state=1)
 
     clear_tmp_folders()        
-
+    print("")
     print("Auto-SKLearn, on dataset ", dataset, " | Number: ", str(dataset_props[dataset][3]), "max of ", str(maxset))
     print("Properties: ")    
     print(str(dataset_props[dataset]))
@@ -265,11 +322,10 @@ for dataset in dataset_names:
     model_done = Value('b', False)
     model_failed = Value('b', False)
     
-    print('h')
     # Start the base process for running the automl model
     base_model_process = Process(target = run_main_model, args = (dataset, 
-                                                                  X_train, 
-                                                                  y_train, 
+                                                                  X_train.copy(), 
+                                                                  y_train.copy(), 
                                                                   max_time, 
                                                                   memory_cap, 
                                                                   tmp_folder, 
@@ -290,8 +346,10 @@ for dataset in dataset_names:
         seed = snap_time + 2
         curr_snap_time = (snap_time+1) * interval
         print(f'Current snap time is {curr_snap_time}')
-        process = Process(target = snapshot_model_and_score, args = (X_test, 
-                                                                     y_test, 
+        process = Process(target = snapshot_model_and_score, args = (X_test.copy(), 
+                                                                     y_test.copy(),
+                                                                     X_train.copy(),
+                                                                     y_train.copy(),
                                                                      max_time, 
                                                                      memory_cap, 
                                                                      tmp_folder, 
@@ -302,10 +360,10 @@ for dataset in dataset_names:
                                                                      shared_list,
                                                                      class_sets,
                                                                      regre_sets,
-                                                                     interval))
-        print('a')
+                                                                     interval,
+                                                                     False))
         process.start()
-        print('b')
+        process.join()
         snap_time += 1
     # Take one last snapshot when the model is done and did not fail
     if not model_failed.value:
@@ -313,9 +371,11 @@ for dataset in dataset_names:
         time.sleep(interval)
         seed = snap_time + 2
         curr_snap_time = (snap_time+1) * interval
-        print(f'Current snap time is {curr_snap_time}')
-        process = Process(target = snapshot_model_and_score, args = (X_test, 
-                                                                     y_test, 
+        print('Taking Final Snapshot')
+        process = Process(target = snapshot_model_and_score, args = (X_test.copy(), 
+                                                                     y_test.copy(),
+                                                                     X_train.copy(),
+                                                                     y_train.copy(), 
                                                                      max_time, 
                                                                      memory_cap, 
                                                                      tmp_folder, 
@@ -326,10 +386,12 @@ for dataset in dataset_names:
                                                                      shared_list,
                                                                      class_sets,
                                                                      regre_sets,
-                                                                     interval))
-        print('d')
+                                                                     interval,
+                                                                     True))
         process.start()
-        print('e')
-        process.join()
-        print('f')
+        process.join()      
+    
+    # Join children to remove dead processes
+    active_children()
+        
 print('DONE!')
