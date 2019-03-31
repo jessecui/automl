@@ -39,6 +39,7 @@ parser.add_argument('-mem', '--memory', type=int, metavar='', required=False, de
 parser.add_argument('-noxg', '--no_xgboost', action='store_true', help = '# Remove XGBoost library from being used in Auto-SkLearn')
 parser.add_argument('-t', '--maxtime', type=int, metavar='', required=False, default=1, help = 'Maximum time to run the model for in seconds(default 3600)')
 parser.add_argument('-i', '--interval', type=int, metavar='', required=False, default=60, help = 'Interval in seconds to record data for each model')
+parser.add_argument('-n', '--number', type=int, metavar='', required=True, default=1, help = 'Unique number to identify the benchmark process (used for creating the folder to store data)')
 
 class_group = parser.add_mutually_exclusive_group()
 class_group.add_argument('-r', '--regre_sets', action='store_true', help='Benchmark on regression sets')
@@ -55,6 +56,7 @@ class_sets = args.class_sets
 no_xgboost = args.no_xgboost
 memory_cap = args.memory
 interval = args.interval
+benchmark_num = args.number
 
 # Set classification sets to default if no class was selected
 if not regre_sets and not class_sets:
@@ -83,6 +85,7 @@ print('Classification: ', class_sets)
 print('No XGBoost: ', no_xgboost)
 print('Memory Cap: ', memory_cap)
 print('Interval: ', interval)
+print('Benchmark Number: ', benchmark_num)
 
 # Create a dictionary of the number of features, instances, and classes per classification dataset
 # Potentially look into including number of binary, integer, and float features in the future
@@ -107,8 +110,8 @@ for dataset in dataset_names:
     dataset_number += 1
 
 # Set the tmp folders where the models will take data out of
-tmp_folder = '/tmp/autosklearn_parallel_example_tmp'
-output_folder = '/tmp/autosklearn_parallel_example_out'
+tmp_folder = '/tmp/autosklearn_parallel_example_tmp' + str(benchmark_num)
+output_folder = '/tmp/autosklearn_parallel_example_out' + str(benchmark_num)
 
 # Clear the folders if there are contents from previous runs
 def clear_tmp_folders():
@@ -185,8 +188,8 @@ def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_
                              seed, curr_snap_time, dataset_props, df_rows_list, class_sets, regre_sets, interval, final):
     print('a')
     
-    task_time_limit = 15 if not final else 60
-    run_time_limit = 1 if not final else 60
+    task_time_limit = 30
+    run_time_limit = 30
     
     if class_sets:
         snapshot = autosklearn.classification.AutoSklearnClassifier(
@@ -197,6 +200,7 @@ def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_
                 output_folder=output_folder,
                 delete_tmp_folder_after_terminate=False,
                 delete_output_folder_after_terminate=False,
+                disable_evaluator_output = True,
                 seed=seed,)
     if regre_sets:
         snapshot = autosklearn.regression.AutoSklearnRegressor(
@@ -207,6 +211,7 @@ def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_
                 output_folder=output_folder,
                 delete_tmp_folder_after_terminate=False,
                 delete_output_folder_after_terminate=False,
+                disable_evaluator_output = True,
                 seed=seed,)            
 
     # Run the snapshot model to retrieve the model information from the temp folder
@@ -280,29 +285,32 @@ def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_
     # Append current dictionary to a list of dictionary
     print('h')
     df_rows_list.append(curr_dataset_results)                
-
-    # Create a Pandas Dataframe with the results
-    autosklearn_df = pd.DataFrame(list(df_rows_list))
-    autosklearn_df.sort_values(by=['number', 'time_stamp'])
-
-    # Save results into a CSV after every round
-    set_type_string = 'c' if class_sets else 'r'
-
-    csv_file_name = 'PMLB_benchmark_results/' + set_type_string + str(dataset_props[dataset][3]) + '_' +                 'maxtime' + str(max_time) + '_'+ 'interval' + str(interval) + '.csv'
-    print('saved to ', csv_file_name)
-
-    autosklearn_df.to_csv(csv_file_name, sep='\t')
+    print('i')
     
-    # Save the pickled model
-    # May occasionally raise an error
-    model_file_name = 'Saved_models/' + set_type_string + str(dataset_props[dataset][3]) + '_' + 'maxtime' + str(max_time) + '_' + 'interval' + str(interval) + '.sav'    
-    try:
-        dump(snapshot, model_file_name)    
-    except Exception as e:
-        print('Unsuccessful snapshot model save');
-        print(e)
+    # Create and save Pandas Dataframe with the results every 4 iterations
+    if final or ((curr_snap_time % (interval * 4)) == 0):        
+        autosklearn_df = pd.DataFrame(list(df_rows_list))
+        print('j')
+        # Save results into a CSV after every round
+        set_type_string = 'c' if class_sets else 'r'
+
+        csv_file_name = 'PMLB_benchmark_results/' + set_type_string + str(dataset_props[dataset][3]) + '_' +                 'maxtime' + str(max_time) + '_'+ 'interval' + str(interval) + '.csv'    
+
+        autosklearn_df.to_csv(csv_file_name, sep='\t')
+
+        print('saved to ', csv_file_name)
+
+        # Save the pickled model
+        # May occasionally raise an error
+        model_file_name = 'Saved_models/' + set_type_string + str(dataset_props[dataset][3]) + '_' + 'maxtime' + str(max_time) + '_' + 'interval' + str(interval) + '.sav'    
         
-    print('Successfully saved snapshot model to ', model_file_name)    
+        try:
+            dump(snapshot, model_file_name)    
+        except Exception as e:
+            print('Unsuccessful snapshot model save');
+            print(e)
+
+        print('Successfully saved snapshot model to ', model_file_name)    
 
 manager = Manager()
 
@@ -363,7 +371,7 @@ for dataset in dataset_names:
                                                                      interval,
                                                                      False))
         process.start()
-        process.join()
+        #process.join()
         snap_time += 1
     # Take one last snapshot when the model is done and did not fail
     if not model_failed.value:
