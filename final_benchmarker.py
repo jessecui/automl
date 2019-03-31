@@ -90,7 +90,7 @@ print('Benchmark Number: ', benchmark_num)
 # Create a dictionary of the number of features, instances, and classes per classification dataset
 # Potentially look into including number of binary, integer, and float features in the future
 
-datasets = []
+final_datasets = []
 dataset_props = {}
 
 if class_sets:
@@ -107,6 +107,7 @@ for dataset in dataset_names:
         continue        
     num_classes = (np.unique(y)).size if class_sets else -1
     dataset_props[dataset] = (num_instances, num_features, num_classes, dataset_number)
+    final_datasets.append(dataset)
     dataset_number += 1
 
 # Set the tmp folders where the models will take data out of
@@ -315,7 +316,7 @@ def snapshot_model_and_score(X_test, y_test, X_train, y_train, max_time, memory_
 manager = Manager()
 
 # Add performance results of the datasets that we query on to a final dataframe to output
-for dataset in dataset_names:    
+for dataset in final_datasets:    
     shared_list = manager.list()
     # Split the data to training and test sets
     X, y = fetch_data(dataset, return_X_y=True)
